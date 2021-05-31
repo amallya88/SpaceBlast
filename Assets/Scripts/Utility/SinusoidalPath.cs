@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class SinusoidalPath : LinearPath
 {
@@ -16,17 +15,19 @@ public class SinusoidalPath : LinearPath
     // frequency
     private float frequency;
 
-    // angle between starting position and x-axis
-    private float movAngle;
-
     // Use this for initialization
     public override void Start()
     {
+        if (Vector3.Equals(startPosition, Vector3.negativeInfinity))
+            startPosition = transform.position;
+
+        if (Vector3.Equals(stopPosition, Vector3.positiveInfinity))
+            stopPosition = startPosition + Vector3.right;
+
         previousPos = startPosition;
-        movAngle = Vector3.Angle(stopPosition - startPosition, Vector3.right);
 
         // cycles per meter
-        frequency = cycles / Vector3.Distance(startPosition, stopPosition);
+        frequency = 0.3f;
     }
 
     public override Vector3 GetNextPosition(float dt)
@@ -45,13 +46,6 @@ public class SinusoidalPath : LinearPath
         // modify y coordinate to make object move in sinusoidal pattern
         nextScreenPos = nextPos;
         var sin_x = Mathf.Sin(2 * Mathf.PI * frequency * (previousPos.x + x_inc));
-
-        // apply rotation to movement
-        if (movAngle > 1)
-        {
-            nextScreenPos.x = nextScreenPos.x * Mathf.Cos(movAngle) - nextScreenPos.y * Mathf.Sin(movAngle);
-            nextScreenPos.y = nextScreenPos.x * Mathf.Sin(movAngle) + nextScreenPos.y * Mathf.Cos(movAngle);
-        }
         nextScreenPos.y += sin_x;
 
         // 2. validate next position
@@ -68,6 +62,12 @@ public class SinusoidalPath : LinearPath
         }
         previousPos = nextPos;
         return nextScreenPos;
+    }
+
+    public void UpdateStopPosition(Vector3 newTargetPos)
+    {
+        startPosition = previousPos;
+        stopPosition = newTargetPos;
     }
 
     /* 

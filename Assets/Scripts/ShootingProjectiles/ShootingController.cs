@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.InputSystem;
+﻿using UnityEngine;
 
 /// <summary>
 /// A class which controlls player aiming and shooting
@@ -22,12 +19,23 @@ public class ShootingController : MonoBehaviour
     [Tooltip("The minimum time between projectiles being fired.")]
     public float fireRate = 0.05f;
 
+    [Tooltip("Amount of time over which fire rate will increase when fire is held down (guns overheat)")]
+    public float rateDecayTime = Mathf.Infinity;
+
+    [Tooltip("Max fire rate")]
+    public float fireRateMax = Mathf.Infinity;
+
     [Tooltip("The maximum diference between the direction the" +
         " shooting controller is facing and the direction projectiles are launched.")]
     public float projectileSpread = 1.0f;
 
     // The last time this component was fired
     private float lastFired = Mathf.NegativeInfinity;
+
+    // how long has fire been held down
+    private float fireHeldTime = 0.0f;
+
+    private int numshotsFired = 0;
 
     [Header("Effects")]
     [Tooltip("The effect to create when this fires")]
@@ -98,11 +106,19 @@ public class ShootingController : MonoBehaviour
     {
         if (isPlayerControlled)
         {
-            if (inputManager.firePressed || inputManager.fireHeld)
+            if (inputManager.firePressed)
             {
                 Fire();
+                fireHeldTime = 0.0f;
             }
-        }   
+            else if (inputManager.fireHeld)
+            {
+                if (fireHeldTime < 10)
+                    fireHeldTime += Time.deltaTime;
+
+                Fire();
+            }            
+        }
     }
 
     /// <summary>
@@ -115,10 +131,22 @@ public class ShootingController : MonoBehaviour
     /// </summary>
     public void Fire()
     {
-        // If the cooldown is over fire a projectile
-        if ((Time.timeSinceLevelLoad - lastFired) > fireRate)
+        var effRate = fireRate;
+
+        // fire rate = m(t) + b where t is time
+        // t=0, b = fireRate (fastest firing)
+        // t=rateDecayTime, fire rate = fireRateMax
+        if(fireRateMax != Mathf.Infinity && rateDecayTime != Mathf.Infinity)
+        {
+            var b = fireRate;
+            var m = (fireRateMax - b) / rateDecayTime;
+            effRate = m * fireHeldTime + b;
+        }
+        
+        if ((Time.timeSinceLevelLoad - lastFired) > effRate)
         {
             // Launches a projectile
+            numshotsFired += 1;
             SpawnProjectile();
 
             if (fireEffect != null)
@@ -158,5 +186,14 @@ public class ShootingController : MonoBehaviour
                 projectileGameObject.transform.SetParent(projectileHolder);
             }
         }
+    }
+
+    /// <summary>
+    /// Description: Get the number of projectiles fired by player
+    /// </summary>
+    /// <returns> int numshotsFired</returns>
+    public int GetShotsFired()
+    {
+        return numshotsFired;
     }
 }

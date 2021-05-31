@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 ///  Class to store and handle 2D linear paths
 /// </summary>
-public class LinearPath : MonoBehaviour
+public class LinearPath : Path
 {
     [Tooltip("Starting position for path")]
     public Vector3 startPosition = Vector3.negativeInfinity;
@@ -45,7 +45,7 @@ public class LinearPath : MonoBehaviour
     /// Returns: 
     /// Vector3
     /// </summary>
-    public virtual Vector3 GetNextPosition(float dt)
+    public override Vector3 GetNextPosition(float dt)
     {
         Vector3 nextPos;
 

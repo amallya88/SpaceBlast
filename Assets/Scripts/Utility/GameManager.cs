@@ -1,11 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.Collections.Generic;
 using System.Linq;
-using Unity.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UIElements;
 
 /// <summary>
 /// Class which manages the game
@@ -51,6 +46,11 @@ public class GameManager : MonoBehaviour
     
     // The number of enemies defeated in game
     private int enemiesDefeated = 0;
+
+    // hits on enemies
+    private int enemyHits = 0;
+    // player enemyHits/shotsFired
+    private float accuracyRating = 0.0f;
 
     [Tooltip("Whether or not to print debug statements about whether the game can be won or not according to the game manager's" +
         " search at start up")]
@@ -197,6 +197,50 @@ public class GameManager : MonoBehaviour
 
     /// <summary>
     /// Description:
+    /// Increments the number of hits by player on enemies by 1
+    /// Input:
+    /// none
+    /// Return:
+    /// void (no returned value)
+    /// </summary>
+    public void IncrementEnemyHits()
+    {
+        enemyHits += 1;
+        UpdateAccuracyRating();        
+    }
+
+    /// <summary>
+    /// Description:
+    /// Increments the number of hits by player on enemies by 1
+    /// Input:
+    /// none
+    /// Return:
+    /// void (no returned value)
+    /// </summary>
+    public void UpdateAccuracyRating()
+    {
+        ShootingController playerShooter = player.GetComponent<ShootingController>();
+        accuracyRating = enemyHits / (float)playerShooter.GetShotsFired();
+        if(accuracyRating > 0)
+            UpdateUIElements();        
+    }
+
+
+    /// <summary>
+    /// Description:
+    /// Get the accuracy rating of player
+    /// Input:
+    /// none
+    /// Return:
+    /// accuracy rating percentage rounded to nearest int
+    /// </summary>
+    public int GetAccuracyRating()
+    {
+        return (int)(accuracyRating * 100);
+    }
+
+    /// <summary>
+    /// Description:
     /// Standard Unity function that gets called when the application (or playmode) ends
     /// Input:
     /// none
@@ -220,7 +264,7 @@ public class GameManager : MonoBehaviour
     /// <param name="scoreAmount">The amount to add to the score</param>
     public static void AddScore(int scoreAmount)
     {
-        score += scoreAmount;
+        score += (int)(scoreAmount * (0.5 + instance.accuracyRating));
         if (score > instance.highScore)
         {
             SaveHighScore();

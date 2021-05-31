@@ -3,13 +3,12 @@
 /// <summary>
 /// This class moves the attached object in the direction specified
 /// </summary>
-public class DirectionalMover : MonoBehaviour
+public class PathMover : MonoBehaviour
 {
     [Header("Settings")]
-    [Tooltip("The direction to move in")]
-    public Vector3 direction = Vector3.down;
-    [Tooltip("The speed to move at")]
-    public float speed = 5.0f;
+    [Tooltip("Type of path for movement")]
+    public Path pathType;
+
 
     /// <summary>
     /// Description:
@@ -34,6 +33,6 @@ public class DirectionalMover : MonoBehaviour
     /// </summary>
     private void Move()
     {
-        transform.position = transform.position + direction.normalized * speed * Time.deltaTime;
+        transform.position = pathType.GetNextPosition(Time.deltaTime);
     }
 }

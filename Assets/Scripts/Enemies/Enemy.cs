@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -36,16 +35,16 @@ public class Enemy : MonoBehaviour
     /// <summary>
     /// Enum to help wih different movement modes
     /// </summary>
-    public enum MovementModes { NoMovement, FollowTarget, Scroll };
+    public enum MovementModes { NoMovement, FollowTarget, Path };
 
     [Tooltip("The way this enemy will move\n" +
         "NoMovement: This enemy will not move.\n" +
         "FollowTarget: This enemy will follow the assigned target.\n" +
-        "Scroll: This enemy will move in one horizontal direction only.")]
+        "Path: This enemy will move in a defined path.")]
     public MovementModes movementMode = MovementModes.FollowTarget;
 
-    //The direction that this enemy will try to scroll if it is set as a scrolling enemy.
-    [SerializeField] private Vector3 scrollDirection = Vector3.right;
+    [SerializeField]
+    public Path pathType;
 
     /// <summary>
     /// Description:
@@ -57,7 +56,7 @@ public class Enemy : MonoBehaviour
     /// </summary>
     private void LateUpdate()
     {
-        HandleBehaviour();       
+        HandleBehaviour();
     }
 
     /// <summary>
@@ -90,7 +89,7 @@ public class Enemy : MonoBehaviour
     private void HandleBehaviour()
     {
         // Check if the target is in range, then move
-        if (followTarget != null && (followTarget.position - transform.position).magnitude < followRange)
+        if (movementMode == MovementModes.Path || followTarget != null && (followTarget.position - transform.position).magnitude < followRange)
         {
             MoveEnemy();
         }
@@ -143,7 +142,7 @@ public class Enemy : MonoBehaviour
         if (GameManager.instance != null && !GameManager.instance.gameIsOver)
         {
             GameManager.instance.IncrementEnemiesDefeated();
-        }       
+        }
     }
 
     /// <summary>
@@ -162,7 +161,11 @@ public class Enemy : MonoBehaviour
         Quaternion rotationToTarget = GetDesiredRotation();
 
         // Move and rotate the enemy
-        transform.position = transform.position + movement;
+        transform.position = movement;
+        //if (movementMode == MovementModes.Path)
+            
+        //else 
+        //    transform.position = transform.position + movement;
         transform.rotation = rotationToTarget;
     }
 
@@ -178,13 +181,13 @@ public class Enemy : MonoBehaviour
     protected virtual Vector3 GetDesiredMovement()
     {
         Vector3 movement;
-        switch(movementMode)
+        switch (movementMode)
         {
             case MovementModes.FollowTarget:
                 movement = GetFollowPlayerMovement();
                 break;
-            case MovementModes.Scroll:
-                movement = GetScrollingMovement();
+            case MovementModes.Path:
+                movement = GetPathNextPos();
                 break;
             default:
                 movement = Vector3.zero;
@@ -210,7 +213,7 @@ public class Enemy : MonoBehaviour
             case MovementModes.FollowTarget:
                 rotation = GetFollowPlayerRotation();
                 break;
-            case MovementModes.Scroll:
+            case MovementModes.Path:
                 rotation = GetScrollingRotation();
                 break;
             default:
@@ -255,9 +258,27 @@ public class Enemy : MonoBehaviour
     /// <returns>Vector3: The movement to be used in follow movement mode.</returns>
     private Vector3 GetFollowPlayerMovement()
     {
-        Vector3 moveDirection = (followTarget.position - transform.position).normalized;
-        Vector3 movement = moveDirection * moveSpeed * Time.deltaTime;
-        return movement;
+        switch (pathType)
+        {
+            case SinusoidalPath sPath:
+                sPath.UpdateStopPosition(followTarget.position);
+                break;
+            case CircularPath cPath:
+                cPath.UpdateCenter(followTarget.position);
+                break;            
+        }
+
+        if (pathType != null)
+        {
+            var nextPos = pathType.GetNextPosition(Time.deltaTime);
+            return nextPos;
+        }
+        else
+        {
+            Vector3 moveDirection = (followTarget.position - transform.position).normalized;
+            Vector3 movement = transform.position + moveDirection * moveSpeed * Time.deltaTime;
+            return movement;
+        }
     }
 
     /// <summary>
@@ -285,11 +306,10 @@ public class Enemy : MonoBehaviour
     /// Vector3
     /// </summary>
     /// <returns>Vector3: The movement to be used in scrolling movement mode.</returns>
-    private Vector3 GetScrollingMovement()
+    private Vector3 GetPathNextPos()
     {
-        scrollDirection = GetScrollDirection();
-        Vector3 movement = scrollDirection * moveSpeed * Time.deltaTime;
-        return movement;
+        var nextPos = pathType.GetNextPosition(Time.deltaTime);
+        return nextPos;
     }
 
     /// <summary>
@@ -304,30 +324,5 @@ public class Enemy : MonoBehaviour
     private Quaternion GetScrollingRotation()
     {
         return Quaternion.identity;
-    }
-
-    /// <summary>
-    /// Description:
-    /// Determines the direction to move in with scrolling movement mode
-    /// Inputs: 
-    /// none
-    /// Returns: 
-    /// Vector3
-    /// </summary>
-    /// <returns>Vector3: The desired scroll direction</returns>
-    private Vector3 GetScrollDirection()
-    {
-        Camera camera = Camera.main;
-        if (camera != null)
-        {
-            Vector2 screenPosition = camera.WorldToScreenPoint(transform.position);
-            Rect screenRect = camera.pixelRect;
-            
-            if (!screenRect.Contains(screenPosition))
-            {
-                return scrollDirection * -1;
-            }
-        }
-        return scrollDirection;
     }
 }

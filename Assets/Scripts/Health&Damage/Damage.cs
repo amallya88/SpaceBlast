@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// This class handles the dealing of damage to health components.
@@ -35,11 +33,9 @@ public class Damage : MonoBehaviour
     /// </summary>
     /// <param name="collision">The Collider2D that set of the function call</param>
     private void OnTriggerEnter2D(Collider2D collision)
-    {
+    {       
         if (dealDamageOnTriggerEnter)
-        {
-            DealDamage(collision.gameObject);
-        }
+            DealDamage(collision.gameObject);        
     }
 
     /// <summary>
@@ -93,7 +89,13 @@ public class Damage : MonoBehaviour
         {
             if (collidedHealth.teamId != this.teamId)
             {
+                if (this.teamId == 0 && collidedHealth.teamId == 1)
+                    GameManager.instance.IncrementEnemyHits();
+                else if (this.teamId == 0)
+                    GameManager.instance.UpdateAccuracyRating();
+
                 collidedHealth.TakeDamage(damageAmount);
+
                 if (hitEffect != null)
                 {
                     Instantiate(hitEffect, transform.position, transform.rotation, null);

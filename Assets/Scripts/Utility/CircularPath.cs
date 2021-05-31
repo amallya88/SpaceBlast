@@ -1,10 +1,9 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 ///  Class to store and handle 2D circular paths
 /// </summary>
-public class CircularPath : MonoBehaviour
+public class CircularPath : Path
 {
     [Tooltip("Center for circular path")]
     public Vector3 center = Vector3.negativeInfinity;
@@ -15,7 +14,6 @@ public class CircularPath : MonoBehaviour
     [Tooltip("Move indefinitely (forever)")]
     public bool loopMotion = false;
 
-    // vector from center of circle to object
     private Vector3 radius;
 
     // the previous position of the game object on the path
@@ -28,8 +26,8 @@ public class CircularPath : MonoBehaviour
     void Start()
     {
         if (Vector3.Equals(center, Vector3.negativeInfinity))
-            center = transform.position + Vector3.right;
-        radius = transform.position - center;      
+            center = transform.position + 8 * Vector3.right;
+        radius = transform.position - center;
     }
 
     /// <summary>
@@ -41,7 +39,7 @@ public class CircularPath : MonoBehaviour
     /// Returns: 
     /// Vector3 next position of object in world coords
     /// </summary>
-    public Vector3 GetNextPosition(float dt)
+    public override Vector3 GetNextPosition(float dt)
     {
         Vector3 nextPos;
 
@@ -64,6 +62,14 @@ public class CircularPath : MonoBehaviour
 
         currAngle = next_angle;
         return nextPos;
+    }
+
+    public void UpdateCenter(Vector3 newCenter)
+    {
+        center = newCenter;
+        if(!Vector3.Equals(center, newCenter))
+            radius = transform.position - newCenter;
+
     }
 
     /* 
